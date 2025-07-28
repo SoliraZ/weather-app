@@ -1,4 +1,4 @@
-import { WeatherData, ForecastItem, Coordinates } from '@/types/weather';
+import { WeatherData, ForecastItem, Coordinates, ForecastApiItem } from '@/types/weather';
 import { rateLimiter } from '@/utils/rate-limiter';
 
 const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
@@ -127,20 +127,20 @@ export const getCurrentWeatherByCoords = async (
 };
 
 export const getForecast = async (city: string): Promise<ForecastItem[]> => {
-  const response = await fetch(
-    `${BASE_URL}/forecast?q=${city}&appid=${API_KEY}&units=metric`
-  );
-  
-  if (!response.ok) {
-    throw new Error('Unable to fetch forecast');
-  }
-  
-  const data = await response.json();
-  
-  return data.list.slice(0, 5).map((item: any) => ({
-    date: item.dt_txt,
-    temp: Math.round(item.main.temp),
-    description: item.weather[0].description,
-    icon: item.weather[0].icon,
-  }));
-};
+    const response = await fetch(
+      `${BASE_URL}/forecast?q=${city}&appid=${API_KEY}&units=metric`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Unable to fetch forecast');
+    }
+    
+    const data = await response.json();
+    
+    return data.list.slice(0, 5).map((item: ForecastApiItem) => ({
+      date: item.dt_txt,
+      temp: Math.round(item.main.temp),
+      description: item.weather[0].description,
+      icon: item.weather[0].icon,
+    }));
+  };
