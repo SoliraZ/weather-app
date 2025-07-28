@@ -1,8 +1,32 @@
 import { WeatherData, ForecastItem, Coordinates } from '@/types/weather';
+import { rateLimiter } from '@/utils/rate-limiter';
 
 const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
 
 const BASE_URL = 'https://api.openweathermap.org/data/2.5';
+
+// Fonction de retry avec délai progressif
+async function fetchWithRetry(url: string, maxRetries = 3): Promise<Response> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(url);
+      
+      // Si c'est un problème serveur, retry
+      if (response.status >= 500 && i < maxRetries - 1) {
+        console.log(`🔄 Retry ${i + 1}/${maxRetries} after server error`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Délai progressif
+        continue;
+      }
+      
+      return response;
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      console.log(`🔄 Retry ${i + 1}/${maxRetries} after network error`);
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
+  throw new Error('Max retries reached');
+}
 
 // Ajout du cache et gestion d'erreurs
 const weatherCache = new Map<string, { data: WeatherData; timestamp: number }>();
@@ -16,10 +40,15 @@ export const getCurrentWeather = async (city: string): Promise<WeatherData> => {
     return cached.data;
   }
 
+  // ✅ Rate limiter check
+  if (!rateLimiter.canMakeCall()) {
+    throw new Error('RATE_LIMIT_EXCEEDED');
+  }
+
   const url = `${BASE_URL}/weather?q=${city}&appid=${API_KEY}&units=metric`;
   
   try {
-    const response = await fetch(url);
+    const response = await fetchWithRetry(url);
     
     // ✅ Gestion des erreurs spécifiques
     if (!response.ok) {
