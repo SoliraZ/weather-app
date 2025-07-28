@@ -35,8 +35,29 @@ export default function Home() {
       
       setWeather(weatherData);
       setForecast(forecastData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // ✅ Messages personnalisés
+      switch (errorMessage) {
+        case 'CITY_NOT_FOUND':
+          setError('🏙️ City not found. Please check the spelling.');
+          break;
+        case 'RATE_LIMIT_EXCEEDED':
+          setError('⏰ Too many requests! Please wait a few minutes and try again.');
+          break;
+        case 'INVALID_API_KEY':
+          setError('🔑 API configuration error. Please contact support.');
+          break;
+        case 'SERVER_ERROR':
+          setError('🌩️ Weather service temporarily unavailable. Try again later.');
+          break;
+        case 'NETWORK_ERROR':
+          setError('🌐 Network error. Check your internet connection.');
+          break;
+        default:
+          setError('❌ Something went wrong. Please try again.');
+      }
       setWeather(null);
       setForecast([]);
     } finally {
@@ -83,6 +104,20 @@ export default function Home() {
     return isNight ? 'from-indigo-800 to-purple-900' : 'from-blue-400 to-blue-600';
   };
 
+  // ✅ Fonction pour le style d'erreur
+  const getErrorStyle = (error: string) => {
+    if (error.includes('Too many requests')) {
+      return "bg-gradient-to-r from-orange-50 to-red-50 border border-orange-300 text-orange-800";
+    }
+    if (error.includes('City not found')) {
+      return "bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-800";
+    }
+    if (error.includes('temporarily unavailable')) {
+      return "bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-300 text-yellow-800";
+    }
+    return "bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-300 text-gray-800";
+  };
+
   return (
     <main className={`min-h-screen bg-gradient-to-br ${getBackgroundGradient(weather)} transition-colors duration-1000`}>
       <div className="container mx-auto px-4 py-8">
@@ -109,8 +144,10 @@ export default function Home() {
         {/* Error Message */}
         {error && (
           <div className="max-w-2xl mx-auto mb-8">
-            <div className="bg-red-500/20 backdrop-blur-md border border-red-500/30 rounded-lg p-4">
-              <p className="text-white text-center">{error}</p>
+            <div className={`${getErrorStyle(error)} px-6 py-4 rounded-xl shadow-lg`}>
+              <div className="flex items-center justify-center">
+                <p className="font-medium text-center">{error}</p>
+              </div>
             </div>
           </div>
         )}
