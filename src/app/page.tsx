@@ -1,103 +1,149 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import SearchBar from '@/components/SearchBar/SearchBar';
+import WeatherCard from '@/components/WeatherCard/WeatherCard';
+import ForecastCard from '@/components/ForecastCard/ForecastCard';
+import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
+import { WeatherData, ForecastItem } from '@/types/weather';
+import { 
+  getCurrentWeather, 
+  getCurrentWeatherByCoords, 
+  getForecast 
+} from '@/lib/weather';
+import { getCurrentLocation } from '@/lib/geolocation';
+import { CloudSun } from 'lucide-react';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [forecast, setForecast] = useState<ForecastItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Charger données par défaut (Paris) au démarrage
+  useEffect(() => {
+    handleSearch('Paris');
+  }, []);
+
+  const handleSearch = async (city: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const weatherData = await getCurrentWeather(city);
+      const forecastData = await getForecast(city);
+      
+      setWeather(weatherData);
+      setForecast(forecastData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setWeather(null);
+      setForecast([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLocationClick = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const coords = await getCurrentLocation();
+      const weatherData = await getCurrentWeatherByCoords(coords);
+      const forecastData = await getForecast(weatherData.name);
+      
+      setWeather(weatherData);
+      setForecast(forecastData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to get your location');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getBackgroundGradient = (weather: WeatherData | null) => {
+    if (!weather) return 'from-blue-400 to-blue-600';
+    
+    const hour = new Date().getHours();
+    const isNight = hour < 6 || hour > 18;
+    
+    if (weather.description.includes('rain')) {
+      return isNight ? 'from-gray-700 to-gray-900' : 'from-gray-500 to-gray-700';
+    }
+    
+    if (weather.description.includes('cloud')) {
+      return isNight ? 'from-indigo-800 to-purple-900' : 'from-gray-400 to-blue-500';
+    }
+    
+    if (weather.description.includes('clear') || weather.description.includes('sun')) {
+      return isNight ? 'from-indigo-900 to-purple-900' : 'from-yellow-400 to-orange-500';
+    }
+    
+    return isNight ? 'from-indigo-800 to-purple-900' : 'from-blue-400 to-blue-600';
+  };
+
+  return (
+    <main className={`min-h-screen bg-gradient-to-br ${getBackgroundGradient(weather)} transition-colors duration-1000`}>
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <CloudSun className="w-12 h-12 text-white" />
+            <h1 className="text-4xl font-bold text-white">Weather App</h1>
+          </div>
+          <p className="text-white/80 text-lg">
+            Get current weather conditions and forecasts for any city
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        {/* Search Bar */}
+        <div className="max-w-2xl mx-auto">
+          <SearchBar
+            onSearch={handleSearch}
+            onLocationClick={handleLocationClick}
+            isLoading={isLoading}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="max-w-2xl mx-auto mb-8">
+            <div className="bg-red-500/20 backdrop-blur-md border border-red-500/30 rounded-lg p-4">
+              <p className="text-white text-center">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Loading */}
+        {isLoading && (
+          <div className="max-w-4xl mx-auto">
+            <LoadingSpinner size="lg" />
+          </div>
+        )}
+
+        {/* Weather Content */}
+        {!isLoading && weather && (
+          <div className="max-w-4xl mx-auto grid gap-8 lg:grid-cols-3">
+            {/* Main Weather Card */}
+            <div className="lg:col-span-2">
+              <WeatherCard weather={weather} />
+            </div>
+            
+            {/* Forecast */}
+            {forecast.length > 0 && (
+              <div className="lg:col-span-1">
+                <ForecastCard forecast={forecast} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Footer */}
+        <footer className="text-center mt-16 text-white/60">
+          <p>Built with Next.js & OpenWeatherMap API</p>
+        </footer>
+      </div>
+    </main>
   );
 }
