@@ -42,6 +42,7 @@ export default function SearchBar({
         onClick={onLocationClick}
         disabled={isLoading}
         className="px-4 py-3 bg-white/20 backdrop-blur-md rounded-lg border border-white/30 text-white hover:bg-white/30 transition-colors disabled:opacity-50"
+        aria-label="Use current location"
       >
         <MapPin className="w-5 h-5" />
       </button>
