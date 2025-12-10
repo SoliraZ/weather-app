@@ -18,7 +18,7 @@ import { CloudSun } from 'lucide-react';
 export default function Home() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [forecast, setForecast] = useState<ForecastItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Charger données par défaut (Paris) au démarrage
