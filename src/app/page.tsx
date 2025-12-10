@@ -119,8 +119,8 @@ export default function Home() {
     return "bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-300 text-gray-800";
   };
 
-  const shouldShowPlaceholders = isLoading || (!weather && !error);
-  const shouldShowForecastColumn = forecast.length > 0 || shouldShowPlaceholders;
+  const shouldReserveContentArea = isLoading || !!weather || !!error;
+  const shouldShowForecastColumn = forecast.length > 0 || isLoading || !weather;
 
   return (
     <main className={`min-h-screen bg-gradient-to-br ${getBackgroundGradient(weather)} transition-colors duration-1000`}>
@@ -164,10 +164,18 @@ export default function Home() {
         )}
 
         {/* Weather Content */}
-        {(weather || shouldShowPlaceholders) && (
+        {shouldReserveContentArea && (
           <div className="max-w-4xl mx-auto grid gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              {weather ? <WeatherCard weather={weather} /> : <WeatherSkeleton />}
+              {weather ? (
+                <WeatherCard weather={weather} />
+              ) : isLoading ? (
+                <WeatherSkeleton />
+              ) : (
+                <div aria-hidden="true">
+                  <WeatherSkeleton />
+                </div>
+              )}
             </div>
             
             {shouldShowForecastColumn && (
@@ -175,7 +183,9 @@ export default function Home() {
                 {forecast.length > 0 ? (
                   <ForecastCard forecast={forecast} />
                 ) : (
-                  <ForecastSkeleton />
+                  <div aria-hidden={forecast.length === 0 && !isLoading}>
+                    <ForecastSkeleton />
+                  </div>
                 )}
               </div>
             )}
