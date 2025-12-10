@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { ForecastItem } from '@/types/weather';
 import { format } from 'date-fns';
 
@@ -48,11 +49,15 @@ function ForecastItem({ item }: ForecastItemProps) {
       </div>
       
       <div className="flex items-center gap-3 flex-1 justify-center">
-        <img
-          src={getWeatherIcon(item.icon)}
-          alt={item.description}
-          className="w-10 h-10"
-        />
+        <div className="relative w-10 h-10 shrink-0">
+          <Image
+            src={getWeatherIcon(item.icon)}
+            alt={item.description}
+            fill
+            sizes="40px"
+            className="object-contain"
+          />
+        </div>
         <p className="text-white/80 text-sm capitalize">{item.description}</p>
       </div>
       

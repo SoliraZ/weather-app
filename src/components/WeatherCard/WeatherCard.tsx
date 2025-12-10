@@ -1,7 +1,8 @@
 'use client';
 
+import Image from 'next/image';
 import { WeatherData } from '@/types/weather';
-import { Thermometer, Eye, Wind, Droplets, Gauge } from 'lucide-react';
+import { Eye, Wind, Droplets, Gauge } from 'lucide-react';
 
 interface WeatherCardProps {
   weather: WeatherData;
@@ -31,11 +32,16 @@ export default function WeatherCard({ weather }: WeatherCardProps) {
             {formatDescription(weather.description)}
           </p>
         </div>
-        <img
-          src={getWeatherIcon(weather.icon)}
-          alt={weather.description}
-          className="w-20 h-20"
-        />
+        <div className="w-20 h-20 relative shrink-0">
+          <Image
+            src={getWeatherIcon(weather.icon)}
+            alt={weather.description}
+            fill
+            sizes="80px"
+            className="object-contain"
+            priority
+          />
+        </div>
       </div>
 
       {/* Temperature */}

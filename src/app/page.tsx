@@ -5,6 +5,7 @@ import SearchBar from '@/components/SearchBar/SearchBar';
 import WeatherCard from '@/components/WeatherCard/WeatherCard';
 import ForecastCard from '@/components/ForecastCard/ForecastCard';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
+import { WeatherSkeleton, ForecastSkeleton } from '@/components/Skeletons/SkeletonCards';
 import { WeatherData, ForecastItem } from '@/types/weather';
 import { 
   getCurrentWeather, 
@@ -118,6 +119,9 @@ export default function Home() {
     return "bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-300 text-gray-800";
   };
 
+  const shouldShowPlaceholders = isLoading || (!weather && !error);
+  const shouldShowForecastColumn = forecast.length > 0 || shouldShowPlaceholders;
+
   return (
     <main className={`min-h-screen bg-gradient-to-br ${getBackgroundGradient(weather)} transition-colors duration-1000`}>
       <div className="container mx-auto px-4 py-8">
@@ -146,7 +150,7 @@ export default function Home() {
           <div className="max-w-2xl mx-auto mb-8">
             <div className={`${getErrorStyle(error)} px-6 py-4 rounded-xl shadow-lg`}>
               <div className="flex items-center justify-center">
-                <p className="font-medium text-center">{error}</p>
+                <p className="font-medium text-center" role="status">{error}</p>
               </div>
             </div>
           </div>
@@ -160,17 +164,19 @@ export default function Home() {
         )}
 
         {/* Weather Content */}
-        {!isLoading && weather && (
+        {(weather || shouldShowPlaceholders) && (
           <div className="max-w-4xl mx-auto grid gap-8 lg:grid-cols-3">
-            {/* Main Weather Card */}
             <div className="lg:col-span-2">
-              <WeatherCard weather={weather} />
+              {weather ? <WeatherCard weather={weather} /> : <WeatherSkeleton />}
             </div>
             
-            {/* Forecast */}
-            {forecast.length > 0 && (
+            {shouldShowForecastColumn && (
               <div className="lg:col-span-1">
-                <ForecastCard forecast={forecast} />
+                {forecast.length > 0 ? (
+                  <ForecastCard forecast={forecast} />
+                ) : (
+                  <ForecastSkeleton />
+                )}
               </div>
             )}
           </div>
